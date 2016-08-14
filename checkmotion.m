@@ -6,7 +6,7 @@ function checkmotion
 % Maximum displacement plot
 % Re-running spm_align with new data set
 %%
-fp = '/Users/myelin/Box Sync/SPM_practice/002rest/rest';
+fp = '/Users/catcamacho/Desktop/002-BABIES-T1/rest';
 threshhold = 0.2;
 minTimeAnalyze = 300;
 TR = 2.5;
@@ -17,7 +17,7 @@ files = spm_select('ExtList', fp, 'vol*');
 cd(fp);
 spm_realign(files);
 
-motion = textscan(fopen([fp '/rp_vol0002.txt'],'r'), '%16f%16f%16f%16f%16f%f%[^\n\r]', 'Delimiter', '', 'WhiteSpace', '',  'ReturnOnError', false);
+motion = textscan(fopen([fp '/rp_vol0000.txt'],'r'), '%16f%16f%16f%16f%16f%f%[^\n\r]', 'Delimiter', '', 'WhiteSpace', '',  'ReturnOnError', false);
 
 d = dir([fp '/vol*']);
 fileslist = transpose({d.name});
@@ -52,6 +52,7 @@ xlabel('volume number')
 ylabel('mm displaced')
 grid on
 grid minor
+saveas(gcf,'absolute_displacement.jpg')
 
 figure
 relative_displacement = plot(time,relx,time,rely,time,relz);
@@ -60,6 +61,7 @@ xlabel('volume number')
 ylabel('mm displaced')
 grid on
 grid minor
+saveas(gcf,'relative_displacement.jpg')
 
 excessX = relx>=threshhold;
 excessY = rely>=threshhold;
