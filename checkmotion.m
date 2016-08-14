@@ -1,4 +1,11 @@
 function checkmotion
+
+%%
+% Things to add:
+% mean displacement plot
+% Maximum displacement plot
+% Re-running spm_align with new data set
+%%
 fp = '/Users/myelin/Box Sync/SPM_practice/002rest/rest';
 threshhold = 0.2;
 minTimeAnalyze = 300;
@@ -19,7 +26,7 @@ x = abs(motion{1});
 y = abs(motion{2});
 z = abs(motion{3});
 
-time = [1:size(x)];
+time = 1:size(x);
 
 relx(1,1) = 0;
 rely(1,1) = 0;
