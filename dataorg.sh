@@ -18,10 +18,11 @@ if (-e $rawfp/$fldr/$raw_fmri) then
 	
 	cd $analysis_dir/$fldr/rest
 	fslsplit rest_raw.nii
-	gunzip vol*
-	
-	echo '---------------- Rest successfully copied for '$sub >> $log
-	
+	gunzip vol*	
+endif
+
+if (-e $analysis_dir/$fldr/rest/vol0000.nii) then
+	echo '---------------- Rest successfully copied for '$sub >> $log	
 else
 	echo 'ERROR: rest.den.nii not found for '$sub >> $log
 endif
@@ -30,12 +31,15 @@ if (-e $ibeat_dir/${sub}/${sub}-5) then
 	mkdir $analysis_dir/$fldr/anat
 	
 	cd $ibeat_dir/${sub}/${sub}-5
-	mri_convert *ravens-gm.img gm.nii
-	mri_convert *ravens-wm.img wm.nii
-	mri_convert *T2-reoriented-strip.img skullstripped_anat.nii
-	mri_convert *seg-aal.img aal_segmentation.nii
+	mri_convert --in_orientation RAS *ravens-gm.img gm.nii
+	mri_convert --in_orientation RAS *ravens-wm.img wm.nii
+	mri_convert --in_orientation RAS *T2-reoriented-strip.img skullstripped_anat.nii
+	mri_convert --in_orientation RAS *seg-aal.img aal_segmentation.nii
 	
-	cp *.nii $analysis_dir/$fldr/anat/
+	cp *.nii $analysis_dir/$fldr/anat/	
+endif
+
+if (-e $analysis_dir/$fldr/anat/skullstripped_anat.nii) then
 	echo '---------------- iBEAT anats successfully copied for '$sub >> $log
 else
 	echo 'ERROR: iBEAT directory not found for '$sub >> $log
