@@ -32,7 +32,7 @@ if (-e $ibeat_dir/${sub}/${sub}-5) then
 	cd $ibeat_dir/${sub}/${sub}-5
 	mri_convert *ravens-gm.img gm.nii
 	mri_convert *ravens-wm.img wm.nii
-	mri_convert *T2-reoriented-strip.img skullstriped_anat.nii
+	mri_convert *T2-reoriented-strip.img skullstripped_anat.nii
 	mri_convert *seg-aal.img aal_segmentation.nii
 	
 	cp *.nii $analysis_dir/$fldr/anat/
