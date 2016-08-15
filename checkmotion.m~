@@ -1,7 +1,9 @@
 function checkmotion
 
 %%
-
+% Things to add:
+% mean displacement plot
+% Maximum displacement plot
 %%
 fp = '/Users/catcamacho/Desktop/002-BABIES-T1/rest';
 threshhold = 0.2;
@@ -38,16 +40,13 @@ for i = 2:size(z);
     relz(i,:) = abs(z(i,:) - z(i-1,:));
 end
 
-meanmot = (x+y+z)./3;
-meanrel = (relx+rely+relz)./3;
-
 roll = motion{4};
 pitch = motion{5};
 yaw = motion {6};
 
 figure
 absolute_displacement = plot(time,x,time,y,time,z);
-title('Absolute Displacement')
+title('absolute Displacement')
 xlabel('volume number')
 ylabel('mm displaced')
 grid on
@@ -56,21 +55,14 @@ saveas(gcf,'absolute_displacement.jpg')
 
 figure
 relative_displacement = plot(time,relx,time,rely,time,relz);
-title('Relative Displacement')
+title('relative Displacement')
 xlabel('volume number')
 ylabel('mm displaced')
 grid on
 grid minor
 saveas(gcf,'relative_displacement.jpg')
 
-figure
-mean_displacement = plot(time,meanrel,time,meanmot);
-title('Mean Displacement')
-xlabel('volume number')
-ylabel('mm displaced')
-grid on
-grid minor
-saveas(gcf,'mean_displacement.jpg')
+
 
 excessX = relx>=threshhold;
 excessY = rely>=threshhold;
@@ -78,13 +70,11 @@ excessZ = relz>=threshhold;
 excess = excessX + excessY + excessZ;
 
 volsToCensor = fileslist(excess>0)
-T = cell2table(volsToCensor);
-writetable(T,'unusableVolumes.txt');
 
 if (size(time) - size(volsToCensor)) >= usabilityThresh
     verdict = sprintf(['Subject is not usable. Too many volumes with motion greater than ' num2str(threshhold) 'mm of motion.'])
 else
-    verdict = sprintf(['Subject is usable! ' num2str(length(volsToCensor)) ' volumes with greater than ' num2str(threshhold) 'mm of relative motion.'])
+    verdict = sprintf(['Subject is usable! ' num2str(length(volsToCensor)) ' volumes with motion greater than ' num2str(threshhold) 'mm of motion.'])
 end
 
 end
