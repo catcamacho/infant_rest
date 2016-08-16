@@ -1,9 +1,9 @@
 function checkmotion
 
-%%
+%% note: save figures as Matlab objects
 
 %%
-fp = '/Users/catcamacho/Desktop/002-BABIES-T1/rest';
+fp = '/Volumes/group/iang/users/ellwoodloweME/spm/002-BABIES-T1';
 threshhold = 0.2;
 minTimeAnalyze = 300;
 TR = 2.5;
