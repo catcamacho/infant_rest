@@ -1,6 +1,6 @@
 function checkmotion
 
-%%
+%% this is an edit
 
 %%
 fp = '/Users/catcamacho/Desktop/002-BABIES-T1/rest';
