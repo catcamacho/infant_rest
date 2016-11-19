@@ -1,5 +1,7 @@
 function  preproc_rest
-template = '/Users/catcamacho/Box Sync/SPM_practice/infantTemplate/nihpd_asym_05-08_t2w.nii';
+fp = '/share/iang/users/ellwoodloweME/spm/';
+restfolder = '/rest/';
+restVols =  cellstr(spm_select('FPList',[fp subjects{1,i} restfolder],'vol*'));
 
 end
 
