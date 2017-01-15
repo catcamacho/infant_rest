@@ -9,14 +9,14 @@ foreach sub ($argv)
 
 set fldr = ${sub}-BABIES-T1
 
-if (-e $ibeat_dir/${sub}/${sub}-5) then
+if (-e $ibeat_dir/T1${sub}/T1${sub}-5) then
 	mkdir $analysis_dir/$fldr/anat
 	
-	cd $ibeat_dir/${sub}/${sub}-5
-	mri_convert --in_orientation RAS *ravens-gm.img gm.nii
-	mri_convert --in_orientation RAS *ravens-wm.img wm.nii
+	cd $ibeat_dir/T1${sub}/T1${sub}-5
+	#mri_convert --in_orientation RAS *ravens-gm.img gm.nii
+	#mri_convert --in_orientation RAS *ravens-wm.img wm.nii
 	mri_convert --in_orientation RAS *T2-reoriented-strip.img skullstripped_anat.nii
-	mri_convert --in_orientation RAS *seg-aal.img aal_segmentation.nii
+	#mri_convert --in_orientation RAS *seg-aal.img aal_segmentation.nii
 	
 	cp *.nii $analysis_dir/$fldr/anat/	
 endif
