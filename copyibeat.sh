@@ -1,31 +1,13 @@
 #! /bin/csh
 
 set rawfp = /Volumes/iang/active/BABIES/BABIES-T1
-set raw_fmri = functional/rest
 set ibeat_dir = /Volumes/iang/active/BABIES/BABIES_ibeat/subjDir
-set analysis_dir = ~/Desktop
-set log = $analysis_dir/log.txt
+set analysis_dir = /Volumes/iang/active/BABIES/BABIES_rest/subjDir
+set log = $analysis_dir/ibeatlog.txt
 
 foreach sub ($argv)
 
 set fldr = ${sub}-BABIES-T1
-
-# if (-e $rawfp/$fldr/$raw_fmri) then
-# 	mkdir $analysis_dir/$fldr
-# 	mkdir $analysis_dir/$fldr/rest
-# 	cp $rawfp/$fldr/$raw_fmri/rest.den.nii $analysis_dir/$fldr/rest/rest.den.nii
-# 	mv $analysis_dir/$fldr/rest/rest.den.nii $analysis_dir/$fldr/rest/rest_raw.nii
-# 	
-# 	cd $analysis_dir/$fldr/rest
-# 	fslsplit rest_raw.nii
-# 	gunzip vol*	
-# endif
-# 
-# if (-e $analysis_dir/$fldr/rest/vol0000.nii) then
-# 	echo '---------------- Rest successfully copied for '$sub >> $log	
-# else
-# 	echo 'ERROR: rest.den.nii not found for '$sub >> $log
-# endif
 
 if (-e $ibeat_dir/${sub}/${sub}-5) then
 	mkdir $analysis_dir/$fldr/anat
