@@ -1,12 +1,12 @@
 %-----------------------------------------------------------------------
-% Job saved on 17-Jan-2017 09:59:03 by cfg_util (rev $Rev: 6460 $)
+% Job saved on 17-Jan-2017 17:41:05 by cfg_util (rev $Rev: 6460 $)
 % spm SPM - SPM12 (6685)
 % cfg_basicio BasicIO - Unknown
 %-----------------------------------------------------------------------
-matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {'/share/iang/active/BABIES/BABIES_rest/subjDir/002x-BABIES-T1/anat/skullstripped_anat.nii,1'};
-matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {'/share/iang/active/BABIES/BABIES_rest/subjDir/002x-BABIES-T1/anat/skullstripped_anat.nii,1'};
-matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasreg = 0.1;
-matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasfwhm = 90;
+matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {'/share/iang/active/BABIES/BABIES_rest/subjDir/010-BABIES-T1/anat/skullstripped_anat.nii,1'};
+matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {'/share/iang/active/BABIES/BABIES_rest/subjDir/010-BABIES-T1/anat/skullstripped_anat.nii,1'};
+matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasreg = 0.0001;
+matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasfwhm = 60;
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.tpm = {'/home/catcam1/matlab/current/spm12/tpm/TPM.nii'};
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.affreg = 'mni';
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = [0 0.001 0.5 0.05 0.2];

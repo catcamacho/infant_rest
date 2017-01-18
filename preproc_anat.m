@@ -1,6 +1,10 @@
 function preproc_anat
 filepath = '/share/iang/active/BABIES/BABIES_rest/subjDir/';
-subject = {''};
+subject = {'002x-BABIES-T1','010-BABIES-T1','012-BABIES-T1'...
+            '020-BABIES-T1','021-BABIES-T1','025-BABIES-T1'...
+            '027-BABIES-T1','031-BABIES-T1','032-BABIES-T1'...
+            '033x-BABIES-T1','035-BABIES-T1','036-BABIES-T1'...
+            '040-BABIES-T1'};
 spm_jobman('initcfg');
 for i = 1:length(subject)
     anat = [filepath subject{1,i} '/anat/skullstripped_anat.nii'];
@@ -12,14 +16,14 @@ end
 
 function matlabbatch = preproc_anat_job(anat)
 %-----------------------------------------------------------------------
-% Job saved on 17-Jan-2017 09:59:03 by cfg_util (rev $Rev: 6460 $)
+% Job saved on 17-Jan-2017 17:41:05 by cfg_util (rev $Rev: 6460 $)
 % spm SPM - SPM12 (6685)
 % cfg_basicio BasicIO - Unknown
 %-----------------------------------------------------------------------
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {anat};
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {anat};
-matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasreg = 0.1;
-matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasfwhm = 90;
+matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasreg = 0.0001;
+matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.biasfwhm = 60;
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.tpm = {'/home/catcam1/matlab/current/spm12/tpm/TPM.nii'};
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.affreg = 'mni';
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = [0 0.001 0.5 0.05 0.2];
