@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 #import packages
 from os import listdir
@@ -28,22 +28,23 @@ MatlabCommand.set_default_paths('~/spm12')
 MatlabCommand.set_default_matlab_cmd("matlab -nodesktop -nosplash")
 
 # Set study variables
-#studyhome = '/Users/catcamacho/Box/BABIES'
-studyhome = '/share/iang/active/BABIES/BABIES_rest'
+studyhome = '/Users/catcamacho/Box/BABIES'
+#studyhome = '/share/iang/active/BABIES/BABIES_rest'
 raw_data = studyhome + '/subjDir'
 output_dir = studyhome + '/processed/preproc'
 workflow_dir = studyhome + '/workflows'
-subjects_list = open(project_home + '/misc/subjects.txt').read().splitlines()
+subjects_list = open(studyhome + '/misc/subjects.txt').read().splitlines()
 #subjects_list = ['021-BABIES-T1','033x-BABIES-T1'] #listdir(raw_data)
 
 template_brain = studyhome + '/templates/T2w_BABIES_template_2mm.nii'
 template_wm = studyhome + '/templates/WM_T2wreg_eroded.nii'
 
+proc_cores = 2 # number of cores of processing for the workflows
+
 vols_to_trim = 4
 interleave = False
 TR = 2.5 # in seconds
 slice_dir = 3 # 1=x, 2=y, 3=z
-proc_cores = 4 # number of cores of processing for the workflows
 resampled_voxel_size = (2,2,2)
 fwhm = 4 #fwhm for smoothing with SUSAN
 
@@ -54,7 +55,7 @@ mask_erosion = 1
 mask_dilation = 2
 
 
-# In[ ]:
+# In[2]:
 
 ## File handling Nodes
 
@@ -75,7 +76,7 @@ datasink.inputs.base_directory = output_dir
 datasink.inputs.container = output_dir
 
 
-# In[ ]:
+# In[3]:
 
 ## Nodes for preprocessing
 
@@ -411,19 +412,19 @@ rs_procwf.connect([(infosource,selectfiles,[('subject_id','subject_id')]),
                    (selectfiles,noise_mat,[('motion_params','motion_params')]),
                    (noise_mat,denoise,[('noise_filepath','design')]),
                    (xfmFUNC,denoise,[('out_file','in_file')]),
-                   (denoise,bandpass,[('out_data','in_file')]),
-                   (bandpass,brightthresh_filt,[('out_file','func')]),
-                   (brightthresh_filt,smooth_filt,[('bright_thresh','brightness_threshold')]),
-                   (bandpass,smooth_filt,[('out_file','in_file')]), 
+                   #(denoise,bandpass,[('out_data','in_file')]),
+                   #(bandpass,brightthresh_filt,[('out_file','func')]),
+                   #(brightthresh_filt,smooth_filt,[('bright_thresh','brightness_threshold')]),
+                   #(bandpass,smooth_filt,[('out_file','in_file')]), 
                    (denoise,brightthresh_orig,[('out_file','func')]),
                    (brightthresh_orig,smooth_orig,[('bright_thresh','brightness_threshold')]),
-                   (denoise,smooth_orig,[('out_file','in_file')]),  
+                   (denoise,smooth_orig,[('out_data','in_file')]),  
                    
                    (compcor,datasink,[('components_file','components_file')]),
-                   (smooth_filt,datasink,[('smoothed_file','smoothed_filt_func')]),
+                   #(smooth_filt,datasink,[('smoothed_file','smoothed_filt_func')]),
                    (smooth_orig,datasink,[('smoothed_file','smoothed_orig_func')]),
-                   (bandpass,datasink,[('out_file','bp_filtered_func')]),
-                   (denoise,datasink,[('out_res','denoise_resids')]),
+                   #(bandpass,datasink,[('out_file','bp_filtered_func')]),
+                   #(denoise,datasink,[('out_res','denoise_resids')]),
                    (denoise,datasink,[('out_data','denoised_func')])
                    ])
 
