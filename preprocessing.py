@@ -17,6 +17,8 @@ from nipype.interfaces.fsl.model import GLM
 from nipype.interfaces.fsl.maths import ApplyMask, TemporalFilter
 from nipype.interfaces.freesurfer import Resample, Binarize
 from nipype.algorithms.confounds import CompCor
+from nipype.interfaces.afni.preprocess import Bandpass
+from nipype.interfaces.afni.utils import AFNItoNIFTI
 
 #set output file type for FSL to NIFTI
 from nipype.interfaces.fsl.preprocess import FSLCommand
@@ -35,6 +37,7 @@ output_dir = studyhome + '/processed/preproc'
 workflow_dir = studyhome + '/workflows'
 subjects_list = open(studyhome + '/misc/subjects.txt').read().splitlines()
 #subjects_list = ['021-BABIES-T1','033x-BABIES-T1'] #listdir(raw_data)
+#subjects_list = ['061-BABIES-T1']
 
 template_brain = studyhome + '/templates/T2w_BABIES_template_2mm.nii'
 template_wm = studyhome + '/templates/WM_T2wreg_eroded.nii'
@@ -48,8 +51,8 @@ slice_dir = 3 # 1=x, 2=y, 3=z
 resampled_voxel_size = (2,2,2)
 fwhm = 4 #fwhm for smoothing with SUSAN
 
-highpass_freq = 0.08 #in Hz
-lowpass_freq = 0.1 #in Hz
+highpass_freq = 0.009 #in Hz
+lowpass_freq = 0.08 #in Hz
 
 mask_erosion = 1
 mask_dilation = 2
@@ -135,7 +138,7 @@ art = Node(ArtifactDetect(mask_type='file',
            name='art')
 
 
-# In[ ]:
+# In[4]:
 
 # Data QC nodes
 def create_coreg_plot(epi,anat):
@@ -232,7 +235,7 @@ preprocwf.write_graph(graph2use='flat')
 preprocwf.run('MultiProc', plugin_args={'n_procs': proc_cores})
 
 
-# In[ ]:
+# In[5]:
 
 # Resting state preprocessing
 # Identity node- select subjects
@@ -251,7 +254,7 @@ templates = {'struct': output_dir + '/resliced_struct/_subject_id_{subject_id}/s
 selectfiles = Node(SelectFiles(templates), name='selectfiles')
 
 
-# In[ ]:
+# In[8]:
 
 # Normalization
 register_template = Node(FLIRT(reference=template_brain), 
@@ -355,6 +358,32 @@ bandpass.inputs.lowpass = lowpass_freq
 bandpass.inputs.highpass = highpass_freq
 bandpass.inputs.sampling_rate = 1/TR
 
+bandpass2 = Node(Bandpass(highpass=highpass_freq,
+                          lowpass=lowpass_freq), 
+                 name='bandpass')
+# Convert afni to nifti format
+afni_convert = Node(AFNItoNIFTI(out_file='func_filtered'), 
+                    name='afni_convert')
+
+def convertafni(in_file):
+    from nipype.interfaces.afni.utils import AFNItoNIFTI
+    from os import path
+    from nipype import config, logging
+    config.enable_debug_mode()
+    logging.update_logging(config)
+    
+    cvt = AFNItoNIFTI()
+    cvt.inputs.in_file = in_file
+    cvt.inputs.out_file = 'func_filtered.nii'
+    cvt.run()
+    
+    out_file = path.abspath('func_filtered.nii')
+    return(out_file)
+
+afni_convert2 = Node(name='afni_convert2', 
+                     interface=Function(input_names=['in_file'], 
+                                        output_names=['out_file'],
+                                        function=convertafni))
 # Spatial smoothing using FSL
 # Brightness threshold should be 0.75 * the contrast between the median brain intensity and the background
 def brightthresh(func):
@@ -390,7 +419,7 @@ brightthresh_orig = Node(name='brightthresh_orig',
 smooth_orig = Node(SUSAN(fwhm=fwhm), name='smooth_orig')
 
 
-# In[ ]:
+# In[10]:
 
 # workflowname.connect([(node1,node2,[('node1output','node2input')]),
 #                       (node2,node3,[('node2output','node3input')])
@@ -412,18 +441,19 @@ rs_procwf.connect([(infosource,selectfiles,[('subject_id','subject_id')]),
                    (selectfiles,noise_mat,[('motion_params','motion_params')]),
                    (noise_mat,denoise,[('noise_filepath','design')]),
                    (xfmFUNC,denoise,[('out_file','in_file')]),
-                   #(denoise,bandpass,[('out_data','in_file')]),
-                   #(bandpass,brightthresh_filt,[('out_file','func')]),
-                   #(brightthresh_filt,smooth_filt,[('bright_thresh','brightness_threshold')]),
-                   #(bandpass,smooth_filt,[('out_file','in_file')]), 
+                   (denoise,bandpass2,[('out_data','in_file')]),
+                   (bandpass2,afni_convert2,[('out_file','in_file')]),
+                   (afni_convert2,brightthresh_filt,[('out_file','func')]),
+                   (brightthresh_filt,smooth_filt,[('bright_thresh','brightness_threshold')]),
+                   (afni_convert2,smooth_filt,[('out_file','in_file')]), 
                    (denoise,brightthresh_orig,[('out_file','func')]),
                    (brightthresh_orig,smooth_orig,[('bright_thresh','brightness_threshold')]),
                    (denoise,smooth_orig,[('out_data','in_file')]),  
                    
                    (compcor,datasink,[('components_file','components_file')]),
-                   #(smooth_filt,datasink,[('smoothed_file','smoothed_filt_func')]),
+                   (smooth_filt,datasink,[('smoothed_file','smoothed_filt_func')]),
                    (smooth_orig,datasink,[('smoothed_file','smoothed_orig_func')]),
-                   #(bandpass,datasink,[('out_file','bp_filtered_func')]),
+                   (afni_convert2,datasink,[('out_file','bp_filtered_func')]),
                    #(denoise,datasink,[('out_res','denoise_resids')]),
                    (denoise,datasink,[('out_data','denoised_func')])
                    ])
@@ -431,9 +461,4 @@ rs_procwf.connect([(infosource,selectfiles,[('subject_id','subject_id')]),
 rs_procwf.base_dir = workflow_dir
 rs_procwf.write_graph(graph2use='flat')
 rs_procwf.run('MultiProc', plugin_args={'n_procs': proc_cores})
-
-
-# In[ ]:
-
-
 
