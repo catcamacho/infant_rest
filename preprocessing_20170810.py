@@ -454,7 +454,6 @@ rs_procwf.connect([(infosource,selectfiles,[('subject_id','subject_id')]),
                    (smooth_filt,datasink,[('smoothed_file','smoothed_filt_func')]),
                    (smooth_orig,datasink,[('smoothed_file','smoothed_orig_func')]),
                    (afni_convert2,datasink,[('out_file','bp_filtered_func')]),
-                   #(denoise,datasink,[('out_res','denoise_resids')]),
                    (denoise,datasink,[('out_data','denoised_func')])
                    ])
 
