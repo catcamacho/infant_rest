@@ -1,7 +1,6 @@
 #! /bin/csh
 
-set rawfp = /Volumes/iang/active/BABIES/BABIES-T1
-set ibeat_dir = /Volumes/iang/active/BABIES/BABIES_ibeat/subjDir
+set ibeat_dir = /Volumes/iang/active/BABIES/BABIES_ibeat/subjDir/BABIES_C
 set analysis_dir = /Volumes/iang/active/BABIES/BABIES_rest/subjDir
 set log = $analysis_dir/ibeatlog.txt
 
@@ -10,7 +9,7 @@ foreach sub ($argv)
 set fldr = ${sub}-BABIES-T1
 
 if (-e $ibeat_dir/T1${sub}/T1${sub}-5) then
-	mkdir $analysis_dir/$fldr/anat
+	#mkdir $analysis_dir/$fldr
 	
 	cd $ibeat_dir/T1${sub}/T1${sub}-5
 	#mri_convert --in_orientation RAS *ravens-gm.img gm.nii
