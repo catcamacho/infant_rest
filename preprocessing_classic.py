@@ -2,8 +2,8 @@
 # coding: utf-8
 
 # # Infant resting state fMRI preprocessing
-# This notebook contains preprocessing tailored to infant resting state fMRI collected in 5-8 month olds. 
-# 
+# This notebook contains preprocessing tailored to infant resting state fMRI collected in 5-8 month olds.
+#
 # The processing steps for the fMRI broadly include:
 # * Slice-time correction
 # * Rigid realignment
@@ -41,7 +41,7 @@ from nipype.algorithms.confounds import CompCor
 from nipype.interfaces.afni.preprocess import Bandpass
 from nipype.interfaces.afni.utils import AFNItoNIFTI
 from nipype.algorithms.misc import Gunzip
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, read_csv
 
 #set output file type for FSL to NIFTI
 from nipype.interfaces.fsl.preprocess import FSLCommand
@@ -53,17 +53,27 @@ MatlabCommand.set_default_paths('~/spm12')
 MatlabCommand.set_default_matlab_cmd("matlab -nodesktop -nosplash")
 
 # Set study variables
-setup='Lucy'
+setup='myelin'
 
-if setup == 'Lucy':
-    studyhome = '/share/iang/active/BABIES/BABIES_rest/'
+
+if setup == 'myelin':
+    studyhome = '/Volumes/iang/active/BABIES/BABIES_rest'
     raw_data = studyhome + '/subjDir/'
     output_dir = studyhome + '/processed/preproc'
     workflow_dir = studyhome + '/workflows'
     template_brain = studyhome + '/templates/T2w_BABIES_template_2mm.nii.gz'
     template_wm = studyhome + '/templates/BABIES_wm_mask_2mm.nii.gz'
     template_mask = studyhome + '/templates/T2w_BABIES_template_2mm_mask.nii.gz'
-    
+
+elif setup == 'Lucy':
+    studyhome = '/share/iang/active/BABIES/BABIES_rest'
+    raw_data = studyhome + '/subjDir/'
+    output_dir = studyhome + '/processed/preproc'
+    workflow_dir = studyhome + '/workflows'
+    template_brain = studyhome + '/templates/T2w_BABIES_template_2mm.nii.gz'
+    template_wm = studyhome + '/templates/BABIES_wm_mask_2mm.nii.gz'
+    template_mask = studyhome + '/templates/T2w_BABIES_template_2mm_mask.nii.gz'
+
 elif setup =='Cat':
     studyhome = '/Users/catcamacho/Box/SNAP/BABIES'
     raw_data = studyhome + '/raw'
@@ -74,7 +84,7 @@ elif setup =='Cat':
     template_mask = studyhome + '/templates/T2w_BABIES_template_2mm_mask.nii.gz'
 
 #subjects_list = open(studyhome + '/BABIES_rest/misc/subjects_test.txt').read().splitlines()
-subjects_list = ['sham1','sham2']
+subjects_list = open(studyhome + '/misc/all_subjects.txt').read().splitlines()
 
 proc_cores = 2 # number of cores of processing for the workflows
 vols_to_trim = 4
@@ -110,7 +120,7 @@ datasink.inputs.container = output_dir
 datasink.inputs.substitutions = substitutions
 
 # Data grabber- select fMRI and sMRI
-if setup=='Lucy':
+if setup=='myelin':
     anat_template = {'struct': raw_data + '{subject_id}/skullstripped_anat.nii.gz'}
     select_anat = Node(SelectFiles(anat_template), name='selectanat')
 
@@ -121,8 +131,21 @@ if setup=='Lucy':
                                    base_directory=raw_data,
                                    infields=['subject_id'],
                                    template_args={'func':[['subject_id']]}),
-                       name='select_func') 
-    
+                       name='select_func')
+
+elif setup=='Lucy':
+    anat_template = {'struct': raw_data + '{subject_id}/skullstripped_anat.nii.gz'}
+    select_anat = Node(SelectFiles(anat_template), name='selectanat')
+
+    func_template = {'func': raw_data + '{subject_id}/rest*.nii.gz'}
+    select_func = Node(DataGrabber(sort_filelist=True,
+                                   template = raw_data + '%s/rest*.nii.gz',
+                                   field_template = func_template,
+                                   base_directory=raw_data,
+                                   infields=['subject_id'],
+                                   template_args={'func':[['subject_id']]}),
+                       name='select_func')
+
 elif setup=='Cat':
     anat_template = {'struct': raw_data + '/{subject_id}/skullstripped_anat.nii.gz'}
     select_anat = Node(SelectFiles(anat_template), name='selectanat')
@@ -132,8 +155,8 @@ elif setup=='Cat':
                                    template = raw_data + '/%s/rest_raw*.nii.gz',
                                    field_template = func_template,
                                    base_directory=raw_data,
-                                   infields=['subject_id'], 
-                                   template_args={'func':[['subject_id']]}), 
+                                   infields=['subject_id'],
+                                   template_args={'func':[['subject_id']]}),
                        name='select_func')
 
 
@@ -152,9 +175,9 @@ reslice_struct = Node(MRIConvert(out_type='niigz',
                                 ),
                    name='reslice_struct')
 # Segment structural scan
-segment = Node(FAST(no_bias=True, 
-                    segments=True, 
-                    number_classes=3), 
+segment = Node(FAST(no_bias=True,
+                    segments=True,
+                    number_classes=3),
                name='segment')
 
 # register BOLD to anat
@@ -166,14 +189,14 @@ applyT2xform = Node(FLIRT(apply_xfm=True),
                     name='applyT2xform')
 
 # register anat to template
-reg_temp = Node(FLIRT(reference=template_brain, 
+reg_temp = Node(FLIRT(reference=template_brain,
                       out_matrix_file='xform.mat',
                       out_file='preproc_anat.nii.gz'),
                 name='reg_temp')
 
 # apply transform to func
 applyxform = Node(FLIRT(reference=template_brain,
-                        apply_xfm=True, 
+                        apply_xfm=True,
                         out_file='preproc_func.nii.gz'),
                   name='applyxform')
 
@@ -187,7 +210,7 @@ def combine_fd(fd_list):
     logging.update_logging(config)
     from os.path import abspath
     from numpy import asarray, savetxt
-    
+
     motion = open(fd_list[0]).read().splitlines()
 
     if len(fd_list)>1:
@@ -208,13 +231,13 @@ def combine_par(par_list):
     logging.update_logging(config)
     from os.path import abspath
     from numpy import vstack, savetxt, genfromtxt
-    
+
     motion = genfromtxt(par_list[0], dtype=float)
     if len(par_list)>1:
         for file in par_list[1:]:
             temp = genfromtxt(par_list[0], dtype=float)
             motion=vstack((motion,temp))
-    
+
     filename = 'motion.par'
     savetxt(filename, motion, delimiter=' ')
     combined_par = abspath(filename)
@@ -231,16 +254,16 @@ def create_coreg_plot(epi,anat):
     config.enable_debug_mode()
     logging.update_logging(config)
     from nilearn import plotting
-    
+
     coreg_filename='coregistration.png'
     display = plotting.plot_anat(epi, display_mode='ortho',
                                  draw_cross=False,
                                  title = 'coregistration to anatomy')
     display.add_edges(anat)
-    display.savefig(coreg_filename) 
+    display.savefig(coreg_filename)
     display.close()
     coreg_file = os.path.abspath(coreg_filename)
-    
+
     return(coreg_file)
 
 def check_mask_coverage(epi,brainmask):
@@ -250,14 +273,14 @@ def check_mask_coverage(epi,brainmask):
     logging.update_logging(config)
     from nilearn import plotting
     from nipype.interfaces.nipy.preprocess import Trim
-    
+
     trim = Trim()
     trim.inputs.in_file = epi
     trim.inputs.end_index = 1
     trim.inputs.out_file = 'epi_vol1.nii.gz'
     trim.run()
     epi_vol = abspath('epi_vol1.nii.gz')
-    
+
     maskcheck_filename='maskcheck.png'
     display = plotting.plot_anat(epi_vol, display_mode='ortho',
                                  draw_cross=False,
@@ -319,9 +342,9 @@ comb_fd = Node(Function(input_names=['fd_list'],
 realignment = Node(MCFLIRT(), name='realignment')
 
 #Slice timing correction based on interleaved acquisition using FSL
-slicetime_correct = Node(SliceTimer(interleaved=interleave, 
+slicetime_correct = Node(SliceTimer(interleaved=interleave,
                                     slice_direction=slice_dir,
-                                    time_repetition=TR, 
+                                    time_repetition=TR,
                                     out_file='st_func.nii.gz'),
                          name='slicetime_correct')
 
@@ -333,7 +356,7 @@ art = Node(ArtifactDetect(mask_type='file',
                           parameter_source='FSL',
                           norm_threshold=0.25, #mutually exclusive with rotation and translation thresh
                           zintensity_threshold=2,
-                          use_differences=[True, False], 
+                          use_differences=[True, False],
                           mask_file=template_mask),
            name='art')
 
@@ -348,7 +371,7 @@ art = Node(ArtifactDetect(mask_type='file',
 #                    ])
 
 preprocwf = Workflow(name='preprocwf')
-preprocwf.connect([(infosource,select_func,[('subject_id','subject_id')]), 
+preprocwf.connect([(infosource,select_func,[('subject_id','subject_id')]),
                    (select_func,reorientfunc,[('func','in_file')]),
                    (reorientfunc,trimvols,[('out_file','in_file')]),
                    (trimvols,motion_correct,[('out_file','in_file')]),
@@ -361,7 +384,7 @@ preprocwf.connect([(infosource,select_func,[('subject_id','subject_id')]),
                    (comb_par,art,[('combined_par','realignment_parameters')]),
                    (applyxform,gunzip,[('out_file','in_file')]),
                    (gunzip,art,[('out_file','realigned_files')]),
-                   
+
                    (infosource,select_anat,[('subject_id','subject_id')]),
                    (select_anat,reorientstruct,[('struct','in_file')]),
                    (reorientstruct,reslice_struct,[('out_file','in_file')]),
@@ -374,11 +397,11 @@ preprocwf.connect([(infosource,select_func,[('subject_id','subject_id')]),
                    (coregT2,applyT2xform,[('out_matrix_file','in_matrix_file')]),
                    (applyT2xform, applyxform,[('out_file','in_file')]),
                    (reg_temp,segment,[('out_file','in_files')]),
-                   
+
                    (coregT2,make_coreg_img,[('out_file','epi')]),
                    (applyxform,make_checkmask_img,[('out_file','epi')]),
                    (reslice_struct,make_coreg_img,[('out_file','anat')]),
-                   
+
                    (applyxform, datasink, [('out_file','preproc_func')]),
                    (reg_temp, datasink,[('out_file','preproc_anat')]),
                    (comb_fd, datasink, [('combined_fd','FD_out_metric_values')]),
@@ -387,7 +410,7 @@ preprocwf.connect([(infosource,select_func,[('subject_id','subject_id')]),
                    (art,datasink, [('plot_files','art_plot_files')]),
                    (art,datasink, [('outlier_files','vols_to_censor')]),
                    (make_checkmask_img,datasink,[('maskcheck_file','maskcheck_image')]),
-                   (make_coreg_img,datasink,[('coreg_file','coreg_image')])                   
+                   (make_coreg_img,datasink,[('coreg_file','coreg_image')])
                   ])
 preprocwf.base_dir = workflow_dir
 preprocwf.write_graph(graph2use='flat')
@@ -406,8 +429,8 @@ infosource.iterables = ('subject_id', subjects_list)
 
 # Data grabber- select fMRI and sMRI
 templates = {'func': output_dir + '/preproc_func/{subject_id}/preproc_func.nii.gz',
-             'csf': output_dir + '/tissue_class_files/{subject_id}/preproc_anat_seg_0.nii.gz', 
-             'vols_to_censor':output_dir + '/vols_to_censor/{subject_id}/art.preproc_func_outliers.txt', 
+             'csf': output_dir + '/tissue_class_files/{subject_id}/preproc_anat_seg_0.nii.gz',
+             'vols_to_censor':output_dir + '/vols_to_censor/{subject_id}/art.preproc_func_outliers.txt',
              'motion_params':output_dir + '/FD_out_metric_values/{subject_id}/FD_full.txt',
              'wm':template_wm}
 selectfiles = Node(SelectFiles(templates), name='selectfiles')
@@ -424,7 +447,7 @@ if isdir(output_dir + '/motion_summary')==False:
     makedirs(output_dir + '/motion_summary')
     motion_df = DataFrame(columns=['meanFD','maxFD','NumCensoredVols','totalVolumes','secondsNotCensored','lengthsNotCensored_descendingSeconds'])
     motion_df.to_csv(motion_df_file)
-    
+
 def summarize_motion(motion_df_file, motion_file, vols_to_censor, TR):
     from nipype import config, logging
     config.enable_debug_mode()
@@ -432,27 +455,27 @@ def summarize_motion(motion_df_file, motion_file, vols_to_censor, TR):
     from os.path import dirname, basename
     from numpy import asarray, mean, insert, zeros, sort
     from pandas import DataFrame, Series, read_csv
-    
+
     motion_df = read_csv(motion_df_file, index_col=0)
-    
+
     motion = asarray(open(motion_file).read().splitlines()).astype(float)
     censvols = asarray(open(vols_to_censor).read().splitlines()).astype(int)
     sec_not_censored = (len(motion)-len(censvols))*TR
-    
+
     if censvols[0]>0:
         periods_not_censored = insert(censvols,0,0)
     else:
         periods_not_censored = censvols
-    
+
     if periods_not_censored[-1]<len(motion):
         periods_not_censored = insert(periods_not_censored,len(periods_not_censored),len(motion))
-    
+
     lengths = zeros(len(periods_not_censored)-1)
     for a in range(0,len(lengths)):
         lengths[a] = periods_not_censored[a+1] - periods_not_censored[a] - 1
-    
+
     lengths = lengths*TR
-    
+
     # sort lengths in descending order
     lengths = sort(lengths)[::-1]
 
@@ -471,13 +494,13 @@ def combine_masks(mask1,mask2):
     from nipype import config, logging
     config.enable_debug_mode()
     logging.update_logging(config)
-    
+
     vols = []
     vols.append(mask1)
     vols.append(mask2)
-    
+
     return(vols)
-    
+
 # Remove all noise (GLM with noise params)
 def create_noise_matrix(vols_to_censor,motion_params,comp_noise):
     from numpy import genfromtxt, zeros,concatenate, savetxt
@@ -492,7 +515,7 @@ def create_noise_matrix(vols_to_censor,motion_params,comp_noise):
     if c > 0:
         scrubbing = zeros((d,c),dtype=int)
         for t in range(0,c):
-            scrubbing[censor_vol_list[t]][t] = 1    
+            scrubbing[censor_vol_list[t]][t] = 1
         noise_matrix = concatenate([motion[:,None],comp_noise,scrubbing],axis=1)
     else:
         noise_matrix = concatenate((motion[:,None],comp_noise),axis=1)
@@ -500,7 +523,7 @@ def create_noise_matrix(vols_to_censor,motion_params,comp_noise):
     noise_file = 'noise_matrix.txt'
     savetxt(noise_file, noise_matrix, delimiter='\t')
     noise_filepath = path.abspath(noise_file)
-    
+
     return(noise_filepath)
 
 def convertafni(in_file):
@@ -509,12 +532,12 @@ def convertafni(in_file):
     from nipype import config, logging
     config.enable_debug_mode()
     logging.update_logging(config)
-    
+
     cvt = AFNItoNIFTI()
     cvt.inputs.in_file = in_file
     cvt.inputs.out_file = 'func_filtered.nii.gz'
     cvt.run()
-    
+
     out_file = path.abspath('func_filtered.nii.gz')
     return(out_file)
 
@@ -522,19 +545,19 @@ def convertafni(in_file):
 def brightthresh(func):
     import nibabel as nib
     from numpy import median, where
-    
+
     from nipype import config, logging
     config.enable_debug_mode()
     logging.update_logging(config)
-    
+
     func_nifti1 = nib.load(func)
     func_data = func_nifti1.get_data()
     func_data = func_data.astype(float)
-    
+
     brain_values = where(func_data > 0)
     median_thresh = median(brain_values)
     bright_thresh = 0.75 * median_thresh
-    
+
     return(bright_thresh)
 
 
@@ -543,43 +566,43 @@ def brightthresh(func):
 
 # Denoising
 merge_confs = Node(Function(input_names=['mask1','mask2'],
-                            output_names=['vols'], 
-                            function=combine_masks), 
+                            output_names=['vols'],
+                            function=combine_masks),
                    name='merge_confs')
 
-compcor = Node(CompCor(merge_method='none'), 
+compcor = Node(CompCor(merge_method='none'),
                name='compcor')
 
 noise_mat = Node(Function(input_names=['vols_to_censor','motion_params','comp_noise'],
-                          output_names=['noise_filepath'], 
-                          function=create_noise_matrix), 
+                          output_names=['noise_filepath'],
+                          function=create_noise_matrix),
                  name='noise_mat')
 
-denoise = Node(GLM(out_res_name='denoised_residuals.nii.gz', 
-                   out_data_name='denoised_func.nii.gz'), 
+denoise = Node(GLM(out_res_name='denoised_residuals.nii.gz',
+                   out_data_name='denoised_func.nii.gz'),
                name='denoise')
 
 # band pass filtering- all rates are in Hz (1/TR or samples/second)
 bandpass = Node(Bandpass(highpass=highpass_freq,
-                         lowpass=lowpass_freq), 
+                         lowpass=lowpass_freq),
                 name='bandpass')
 
 afni_convert = Node(Function(input_names=['in_file'],
                              output_names=['out_file'],
-                             function=convertafni), 
+                             function=convertafni),
                     name='afni_convert')
 
-# Spatial smoothing 
-brightthresh_filt = Node(Function(input_names=['func'], 
-                                  output_names=['bright_thresh'], 
-                                  function=brightthresh), 
-                         name='brightthresh_filt')    
-    
+# Spatial smoothing
+brightthresh_filt = Node(Function(input_names=['func'],
+                                  output_names=['bright_thresh'],
+                                  function=brightthresh),
+                         name='brightthresh_filt')
+
 smooth_filt = Node(SUSAN(fwhm=fwhm), name='smooth_filt')
 
-motion_summary = Node(Function(input_names=['motion_df_file','motion_file','vols_to_censor'], 
-                               output_names=[], 
-                               function=summarize_motion), 
+motion_summary = Node(Function(input_names=['motion_df_file','motion_file','vols_to_censor'],
+                               output_names=[],
+                               function=summarize_motion),
                       name='motion_summary')
 motion_summary.inputs.motion_df_file = motion_df_file
 
@@ -606,10 +629,10 @@ rs_procwf.connect([(infosource,selectfiles,[('subject_id','subject_id')]),
                    (bandpass,afni_convert,[('out_file','in_file')]),
                    (afni_convert,brightthresh_filt,[('out_file','func')]),
                    (brightthresh_filt,smooth_filt,[('bright_thresh','brightness_threshold')]),
-                   (afni_convert,smooth_filt,[('out_file','in_file')]),  
+                   (afni_convert,smooth_filt,[('out_file','in_file')]),
                    (selectfiles, motion_summary, [('motion_params','motion_file'),
                                                   ('vols_to_censor','vols_to_censor')]),
-                   
+
                    (smooth_filt,datasink,[('smoothed_file','proc_func')])
                    ])
 
@@ -619,7 +642,3 @@ rs_procwf.run('MultiProc', plugin_args={'n_procs': proc_cores})
 
 
 # In[ ]:
-
-
-
-
