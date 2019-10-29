@@ -192,7 +192,6 @@ def voxelwise_glm(func,shared_noise_file,mean_func,mask):
 
 
     coeff_image = unmask(coefficients, mask)
-    pval_image = unmask(pvals, mask)
     resid_image = unmask(residuals, mask)
     coeff_image.to_filename('weights.nii.gz')
     resid_image.to_filename('resids.nii.gz')
